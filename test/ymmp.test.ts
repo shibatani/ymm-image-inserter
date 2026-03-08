@@ -6,7 +6,7 @@ import {
   findVoiceItems,
   findShapeTemplate,
   detectChapters,
-  buildShapeItem,
+  buildClippingShapeItem,
   buildImageItem,
   buildTextItem,
   hasRemark,
@@ -62,18 +62,16 @@ describe("detectChapters", () => {
   });
 });
 
-describe("buildShapeItem", () => {
-  test("clones template with new frame/length/layer", async () => {
-    const data = await readYmmp(FIXTURE_PATH);
-    const items = getItems(data);
-    const template = findShapeTemplate(items)!;
-    const built = buildShapeItem(template, 5000, 2000);
+describe("buildClippingShapeItem", () => {
+  test("creates hardcoded clipping shape with correct properties", () => {
+    const built = buildClippingShapeItem(5000, 2000);
     expect(built.Frame).toBe(5000);
     expect(built.Length).toBe(2000);
     expect(built.Layer).toBe(10);
     expect(built.Remark).toBe("ymm-auto:clipping:5000");
-    // Original template unchanged
-    expect(template.Layer).toBe(6);
+    expect(built.$type).toContain("ShapeItem");
+    // Verify blackboard color
+    expect((built.ShapeParameter as any).Brush.Parameter.Color).toBe("#FF184233");
   });
 });
 

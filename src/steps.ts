@@ -3,11 +3,10 @@ import fs from "node:fs/promises";
 import { imageSize } from "image-size";
 import type { Chapter, ImageBlock, YmmpData, YmmpItem } from "./types.ts";
 import {
+  buildClippingShapeItem,
   buildImageItem,
-  buildShapeItem,
   buildTextItem,
   buildVideoItem,
-  findClippingTemplate,
   getItems,
   hasRemark,
 } from "./ymmp.ts";
@@ -63,11 +62,6 @@ export function step4_insertClipping(
   chapters: Chapter[],
 ): number {
   const items = getItems(data);
-  const template = findClippingTemplate(items);
-  if (!template) {
-    console.warn("警告: クリッピングテンプレート (Layer 10) が見つかりません。Step 4 をスキップします。");
-    return 0;
-  }
 
   let inserted = 0;
   for (const chapter of chapters) {
@@ -75,7 +69,7 @@ export function step4_insertClipping(
     if (hasRemark(items, remark)) {
       continue; // already inserted
     }
-    const newItem = buildShapeItem(template, chapter.frame, chapter.length);
+    const newItem = buildClippingShapeItem(chapter.frame, chapter.length);
     items.push(newItem);
     inserted++;
   }
@@ -94,10 +88,6 @@ export async function step5_insertPhotos(
   clipHeight: number = CLIP_HEIGHT,
 ): Promise<{ inserted: number; skipped: string[] }> {
   const items = getItems(data);
-  const template = findClippingTemplate(items);
-  if (!template) {
-    console.warn("警告: クリッピングテンプレート (Layer 10) が見つかりません。デフォルト座標で挿入します。");
-  }
   let inserted = 0;
   const skipped: string[] = [];
 
@@ -151,7 +141,7 @@ export async function step5_insertPhotos(
     }
 
     const uncPath = toWindowsUncPath(photoPath);
-    const item = buildItemForFile(template, uncPath, {
+    const item = buildItemForFile(undefined, uncPath, {
       frame: block.frame,
       length: block.length,
       zoom,
@@ -162,7 +152,7 @@ export async function step5_insertPhotos(
 
     // Insert reference text if URL exists
     if (block.group.referenceUrl) {
-      const imageX = template?.X?.Values[0]?.Value ?? DEFAULT_IMAGE_X;
+      const imageX = DEFAULT_IMAGE_X;
       const textItem = buildTextItem({
         text: block.group.referenceUrl,
         frame: block.frame,
@@ -225,7 +215,6 @@ export async function step7_insertAi(
   clipHeight: number = CLIP_HEIGHT,
 ): Promise<{ inserted: number; skipped: string[] }> {
   const items = getItems(data);
-  const template = findClippingTemplate(items);
   let inserted = 0;
   const skipped: string[] = [];
 
@@ -261,7 +250,7 @@ export async function step7_insertAi(
     }
 
     const uncPath = toWindowsUncPath(imagePath);
-    const item = buildItemForFile(template, uncPath, {
+    const item = buildItemForFile(undefined, uncPath, {
       frame: block.frame,
       length: block.length,
       zoom,

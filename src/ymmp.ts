@@ -92,14 +92,6 @@ export function findShapeTemplate(items: YmmpItem[]): YmmpItem | undefined {
   );
 }
 
-/**
- * Find a ShapeItem template on the clipping layer (Layer 10)
- */
-export function findClippingTemplate(items: YmmpItem[]): YmmpItem | undefined {
-  return items.find(
-    (item) => item.$type === SHAPE_ITEM_TYPE && item.Layer === LAYER_CLIPPING,
-  );
-}
 
 /**
  * Detect chapter boundaries from transition ImageItems
@@ -164,19 +156,57 @@ export function detectChapters(items: YmmpItem[]): Chapter[] {
 }
 
 /**
- * Build a ShapeItem for the clipping layer (clone from Layer 10 template)
+ * Build a ShapeItem for the clipping layer (Layer 10, hardcoded blackboard style)
  */
-export function buildShapeItem(
-  template: YmmpItem,
+export function buildClippingShapeItem(
   frame: number,
   length: number,
 ): YmmpItem {
-  const clone = structuredClone(template);
-  clone.Frame = frame;
-  clone.Length = length;
-  clone.Layer = LAYER_CLIPPING;
-  clone.Remark = `${REMARK_PREFIX}:clipping:${frame}`;
-  return clone;
+  return {
+    $type: SHAPE_ITEM_TYPE,
+    ShapeType2: "YukkuriMovieMaker.Shape.QuadrilateralShapePlugin, YukkuriMovieMaker, Version=4.50.0.3, Culture=neutral, PublicKeyToken=null",
+    ShapeParameter: {
+      $type: "YukkuriMovieMaker.Project.Items.RectangleShapeParameter, YukkuriMovieMaker",
+      Round: makeAnimatedValue(0),
+      SizeMode: "SizeAspect",
+      Size: makeAnimatedValue(1129.1),
+      AspectRate: makeAnimatedValue(-44.4),
+      Width: makeAnimatedValue(100),
+      Height: makeAnimatedValue(100),
+      StrokeThickness: makeAnimatedValue(4000),
+      Brush: {
+        Type: "YukkuriMovieMaker.Plugin.Brush.SolidColorBrushPlugin, YukkuriMovieMaker, Version=4.50.0.3, Culture=neutral, PublicKeyToken=null",
+        Parameter: {
+          $type: "YukkuriMovieMaker.Plugin.Brush.SolidColorBrushParameter, YukkuriMovieMaker",
+          Color: "#FF184233",
+        },
+      },
+    },
+    X: makeAnimatedValue(DEFAULT_IMAGE_X) as AnimatedValue,
+    Y: makeAnimatedValue(DEFAULT_IMAGE_Y) as AnimatedValue,
+    Z: makeAnimatedValue(0.0) as AnimatedValue,
+    Opacity: makeAnimatedValue(100.0) as AnimatedValue,
+    Zoom: makeAnimatedValue(100.0) as AnimatedValue,
+    Rotation: makeAnimatedValue(0.0) as AnimatedValue,
+    FadeIn: 0.0,
+    FadeOut: 0.0,
+    Blend: "Normal",
+    IsInverted: false,
+    IsClippingWithObjectAbove: false,
+    IsAlwaysOnTop: false,
+    IsZOrderEnabled: false,
+    VideoEffects: [],
+    Group: 0,
+    Frame: frame,
+    Layer: LAYER_CLIPPING,
+    KeyFrames: { Frames: [], Count: 0 },
+    Length: length,
+    PlaybackRate: 100.0,
+    ContentOffset: "00:00:00",
+    Remark: `${REMARK_PREFIX}:clipping:${frame}`,
+    IsLocked: false,
+    IsHidden: false,
+  };
 }
 
 /**
