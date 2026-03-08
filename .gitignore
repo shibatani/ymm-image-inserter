@@ -5,6 +5,10 @@ node_modules
 out
 dist
 *.tgz
+ai_images/
+
+# temp files from atomic write
+*.ymmp.tmp
 
 # code coverage
 coverage

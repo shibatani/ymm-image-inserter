@@ -1,4 +1,6 @@
 import pLimit from "p-limit";
+import sharp from "sharp";
+import { API_CONCURRENCY, AI_IMAGE_WIDTH, AI_IMAGE_HEIGHT, RETRYABLE_STATUS_CODES } from "./constants.ts";
 
 interface ImagenResponse {
   predictions?: Array<{
@@ -20,23 +22,19 @@ async function generateSingle(
   prompt: string,
   apiKey: string,
 ): Promise<string> {
-  const url = `${BASE_URL}/${MODEL}:predictLongRunning`;
+  const url = `${BASE_URL}/${MODEL}:predict?key=${apiKey}`;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
         instances: [{ prompt }],
         parameters: {
           sampleCount: 1,
           aspectRatio: "16:9",
-          sampleImageSize: "1K",
-          enhancePrompt: true,
-          language: "ja",
           personGeneration: "allow_adult",
           outputOptions: {
             mimeType: "image/jpeg",
@@ -55,6 +53,14 @@ async function generateSingle(
         );
       }
       return prediction.bytesBase64Encoded;
+    }
+
+    // Non-retryable client errors: fail immediately
+    if (!RETRYABLE_STATUS_CODES.has(response.status)) {
+      const body = await response.text();
+      throw new Error(
+        `API クライアントエラー (リトライ不可): ${response.status} ${body.slice(0, 200)}`,
+      );
     }
 
     if (attempt < MAX_RETRIES) {
@@ -94,7 +100,7 @@ export async function generateImages(
   apiKey: string,
   maxGenerate?: number,
 ): Promise<GenerateResult[]> {
-  const limit = pLimit(5);
+  const limit = pLimit(API_CONCURRENCY);
 
   // Slice upfront to avoid race condition on concurrent counter
   const effectiveTasks =
@@ -129,7 +135,12 @@ export async function generateImages(
       try {
         console.log(`  生成中: ${task.imageId} - ${task.description}`);
         const base64 = await generateSingle(task.prompt, apiKey);
-        const buffer = Buffer.from(base64, "base64");
+        const rawBuffer = Buffer.from(base64, "base64");
+        // Upscale from 1K to Midjourney-compatible dimensions
+        const buffer = await sharp(rawBuffer)
+          .resize(AI_IMAGE_WIDTH, AI_IMAGE_HEIGHT, { fit: "fill" })
+          .jpeg({ quality: 85 })
+          .toBuffer();
         await Bun.write(task.outputPath, buffer);
         console.log(`  ✅ ${task.imageId} 完了`);
         results.push({
@@ -152,3 +163,6 @@ export async function generateImages(
   await Promise.all(promises);
   return results;
 }
+
+// Export for testing
+export { generateSingle as _generateSingleForTest };

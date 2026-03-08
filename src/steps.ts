@@ -19,6 +19,7 @@ import {
   toWindowsUncPath,
 } from "./util.ts";
 import { generateImages, type GenerateResult } from "./imagen.ts";
+import { DEFAULT_IMAGE_X, DESC_MAX_LENGTH } from "./constants.ts";
 
 /**
  * Step 4: Insert clipping ShapeItems on Layer 10 for each chapter
@@ -117,7 +118,7 @@ export async function step5_insertPhotos(
 
     // Insert reference text if URL exists
     if (block.group.referenceUrl) {
-      const imageX = template?.X?.Values[0]?.Value ?? 705.0;
+      const imageX = template?.X?.Values[0]?.Value ?? DEFAULT_IMAGE_X;
       const textItem = buildTextItem({
         text: block.group.referenceUrl,
         frame: block.frame,
@@ -156,7 +157,7 @@ export async function step6_generateAi(
     // Sanitize description for filename
     const safeDesc = block.group.description
       .replace(/[/\\:*?"<>|]/g, "_")
-      .slice(0, 50);
+      .slice(0, DESC_MAX_LENGTH);
     return {
       imageId: block.group.imageId,
       prompt: block.group.aiPrompt,

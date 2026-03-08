@@ -29,6 +29,15 @@ export function toWindowsUncPath(macPath: string): string {
       `パスがホームディレクトリ配下ではありません: ${macPath}\nUNC変換にはホームディレクトリ（${home}）配下のパスが必要です`,
     );
   }
+
+  // Reject path traversal sequences
+  const relative = macPath.slice(home.length);
+  if (relative.split("/").some((seg) => seg === "..")) {
+    throw new Error(
+      `パストラバーサルが検出されました: ${macPath}`,
+    );
+  }
+
   return macPath.replace(home, "\\\\Mac\\Home").replace(/\//g, "\\");
 }
 

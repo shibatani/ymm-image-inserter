@@ -83,7 +83,8 @@ async function readXlsx(filePath: string): Promise<string[][]> {
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       // Pad with empty strings for gaps
       while (values.length < colNumber - 1) values.push("");
-      values.push(cell.text ?? "");
+      const cellValue = cell.value;
+      values.push(cellValue == null ? "" : String(cellValue));
     });
     rows.push(values);
   });

@@ -47,6 +47,13 @@ describe("toWindowsUncPath", () => {
       "ホームディレクトリ配下ではありません",
     );
   });
+
+  test("throws for path traversal with ..", () => {
+    const home = require("os").homedir();
+    expect(() => toWindowsUncPath(`${home}/images/../../../etc/passwd`)).toThrow(
+      "パストラバーサルが検出されました",
+    );
+  });
 });
 
 describe("calcZoom", () => {

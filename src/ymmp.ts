@@ -7,6 +7,17 @@ import type {
   YmmpItem,
 } from "./types.ts";
 import { makeAnimatedValue, makeRemark, REMARK_PREFIX } from "./util.ts";
+import {
+  LAYER_SHAPE_TEMPLATE,
+  LAYER_CLIPPING,
+  LAYER_IMAGE,
+  LAYER_REFERENCE_TEXT,
+  MAX_TRANSITION_LENGTH,
+  DEFAULT_IMAGE_X,
+  DEFAULT_IMAGE_Y,
+  REFERENCE_TEXT_Y,
+  REFERENCE_FONT_SIZE,
+} from "./constants.ts";
 
 const VOICE_ITEM_TYPE =
   "YukkuriMovieMaker.Project.Items.VoiceItem, YukkuriMovieMaker";
@@ -71,22 +82,22 @@ export function findVoiceItems(items: YmmpItem[]): VoiceEntry[] {
 }
 
 /**
- * Find a ShapeItem template on Layer 6
+ * Find a ShapeItem template on the template layer
  */
 export function findShapeTemplate(items: YmmpItem[]): YmmpItem | undefined {
   return items.find(
-    (item) => item.$type === SHAPE_ITEM_TYPE && item.Layer === 6,
+    (item) => item.$type === SHAPE_ITEM_TYPE && item.Layer === LAYER_SHAPE_TEMPLATE,
   );
 }
 
 /**
  * Detect chapter boundaries from transition ImageItems
- * Transitions are short (<=90 frames) ImageItems with "黒板背景" in FilePath
+ * Transitions are short (<=MAX_TRANSITION_LENGTH frames) ImageItems with "黒板背景" in FilePath
  */
 export function detectChapters(items: YmmpItem[]): Chapter[] {
-  // Find existing ShapeItems on Layer 6 (these define chapter boundaries)
+  // Find existing ShapeItems on template layer (these define chapter boundaries)
   const shapeItems = items
-    .filter((item) => item.$type === SHAPE_ITEM_TYPE && item.Layer === 6)
+    .filter((item) => item.$type === SHAPE_ITEM_TYPE && item.Layer === LAYER_SHAPE_TEMPLATE)
     .sort((a, b) => a.Frame - b.Frame);
 
   if (shapeItems.length > 0) {
@@ -103,7 +114,7 @@ export function detectChapters(items: YmmpItem[]): Chapter[] {
         item.$type === IMAGE_ITEM_TYPE &&
         typeof item.FilePath === "string" &&
         item.FilePath.includes("黒板背景") &&
-        item.Length <= 90,
+        item.Length <= MAX_TRANSITION_LENGTH,
     )
     .sort((a, b) => a.Frame - b.Frame);
 
@@ -142,7 +153,7 @@ export function detectChapters(items: YmmpItem[]): Chapter[] {
 }
 
 /**
- * Build a ShapeItem for Layer 10 (clipping template clone)
+ * Build a ShapeItem for the clipping layer (template clone)
  */
 export function buildShapeItem(
   template: YmmpItem,
@@ -152,13 +163,13 @@ export function buildShapeItem(
   const clone = structuredClone(template);
   clone.Frame = frame;
   clone.Length = length;
-  clone.Layer = 10;
+  clone.Layer = LAYER_CLIPPING;
   clone.Remark = `${REMARK_PREFIX}:clipping:${frame}`;
   return clone;
 }
 
 /**
- * Build an ImageItem for Layer 11 (inserted illustration)
+ * Build an ImageItem for the image layer (inserted illustration)
  */
 export function buildImageItem(
   template: YmmpItem | undefined,
@@ -172,10 +183,10 @@ export function buildImageItem(
 ): YmmpItem {
   const x = template?.X
     ? structuredClone(template.X)
-    : makeAnimatedValue(705.0);
+    : makeAnimatedValue(DEFAULT_IMAGE_X);
   const y = template?.Y
     ? structuredClone(template.Y)
-    : makeAnimatedValue(-459.0);
+    : makeAnimatedValue(DEFAULT_IMAGE_Y);
 
   return {
     $type: IMAGE_ITEM_TYPE,
@@ -196,7 +207,7 @@ export function buildImageItem(
     VideoEffects: [],
     Group: 0,
     Frame: params.frame,
-    Layer: 11,
+    Layer: LAYER_IMAGE,
     KeyFrames: { Frames: [], Count: 0 },
     Length: params.length,
     PlaybackRate: 100.0,
@@ -208,7 +219,7 @@ export function buildImageItem(
 }
 
 /**
- * Build a TextItem for Layer 12 (reference URL text)
+ * Build a TextItem for the reference text layer (reference URL text)
  */
 export function buildTextItem(params: {
   text: string;
@@ -233,11 +244,11 @@ export function buildTextItem(params: {
     $type: TEXT_ITEM_TYPE,
     Text: params.text,
     Font: "けいふぉんと",
-    FontSize: 24.1, // YMM existing template value (not 24.0)
+    FontSize: REFERENCE_FONT_SIZE,
     BasePoint: "LeftTop",
     FontColor: "#FF000000",
     X: makeAnimatedValue(textX) as AnimatedValue,
-    Y: makeAnimatedValue(-505.0) as AnimatedValue,
+    Y: makeAnimatedValue(REFERENCE_TEXT_Y) as AnimatedValue,
     Z: makeAnimatedValue(0.0) as AnimatedValue,
     Opacity: makeAnimatedValue(100.0) as AnimatedValue,
     Zoom: makeAnimatedValue(100.0) as AnimatedValue,
@@ -252,7 +263,7 @@ export function buildTextItem(params: {
     VideoEffects: [],
     Group: 0,
     Frame: params.frame,
-    Layer: 12,
+    Layer: LAYER_REFERENCE_TEXT,
     KeyFrames: { Frames: [], Count: 0 },
     Length: params.length,
     PlaybackRate: 100.0,
