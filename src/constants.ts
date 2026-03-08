@@ -6,8 +6,8 @@ export const LAYER_REFERENCE_TEXT = 12;
 
 // YMM item defaults
 export const MAX_TRANSITION_LENGTH = 90;
-export const DEFAULT_IMAGE_X = 705.0;
-export const DEFAULT_IMAGE_Y = -459.0;
+export const DEFAULT_IMAGE_X = -2.5;
+export const DEFAULT_IMAGE_Y = -154.0;
 export const REFERENCE_TEXT_Y = -505.0;
 export const REFERENCE_FONT_SIZE = 24.1;
 

@@ -8,7 +8,6 @@ import {
   buildTextItem,
   buildVideoItem,
   findClippingTemplate,
-  findShapeTemplate,
   getItems,
   hasRemark,
 } from "./ymmp.ts";
@@ -95,9 +94,9 @@ export async function step5_insertPhotos(
   clipHeight: number = CLIP_HEIGHT,
 ): Promise<{ inserted: number; skipped: string[] }> {
   const items = getItems(data);
-  const template = findShapeTemplate(items);
+  const template = findClippingTemplate(items);
   if (!template) {
-    console.warn("警告: ShapeItemテンプレート (Layer 6) が見つかりません。デフォルト座標で挿入します。");
+    console.warn("警告: クリッピングテンプレート (Layer 10) が見つかりません。デフォルト座標で挿入します。");
   }
   let inserted = 0;
   const skipped: string[] = [];
@@ -226,7 +225,7 @@ export async function step7_insertAi(
   clipHeight: number = CLIP_HEIGHT,
 ): Promise<{ inserted: number; skipped: string[] }> {
   const items = getItems(data);
-  const template = findShapeTemplate(items);
+  const template = findClippingTemplate(items);
   let inserted = 0;
   const skipped: string[] = [];
 
