@@ -6,6 +6,7 @@ import {
   buildImageItem,
   buildShapeItem,
   buildTextItem,
+  buildVideoItem,
   findShapeTemplate,
   getItems,
   hasRemark,
@@ -19,7 +20,40 @@ import {
   toWindowsUncPath,
 } from "./util.ts";
 import { generateImages, type GenerateResult } from "./imagen.ts";
-import { DEFAULT_IMAGE_X, DESC_MAX_LENGTH } from "./constants.ts";
+import {
+  DEFAULT_IMAGE_X,
+  DESC_MAX_LENGTH,
+  IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+  REJECTED_EXTENSIONS,
+} from "./constants.ts";
+
+/**
+ * Check file extension and return item type to use.
+ * Returns "image", "video", "rejected", or "unknown".
+ */
+function classifyExtension(filePath: string): "image" | "video" | "rejected" | "unknown" {
+  const ext = path.extname(filePath).toLowerCase();
+  if (IMAGE_EXTENSIONS.has(ext)) return "image";
+  if (VIDEO_EXTENSIONS.has(ext)) return "video";
+  if (REJECTED_EXTENSIONS.has(ext)) return "rejected";
+  return "unknown";
+}
+
+/**
+ * Build the appropriate item (ImageItem or VideoItem) based on file extension
+ */
+function buildItemForFile(
+  template: YmmpItem | undefined,
+  filePath: string,
+  params: { frame: number; length: number; zoom: number; imageId: string },
+): YmmpItem {
+  const kind = classifyExtension(filePath);
+  if (kind === "video") {
+    return buildVideoItem(template, { filePath, ...params });
+  }
+  return buildImageItem(template, { filePath, ...params });
+}
 
 /**
  * Step 4: Insert clipping ShapeItems on Layer 10 for each chapter
@@ -90,6 +124,17 @@ export async function step5_insertPhotos(
       continue;
     }
 
+    // Check extension
+    const extKind = classifyExtension(photoFile);
+    if (extKind === "rejected") {
+      console.warn(`  警告: ${block.group.imageId} の拡張子 ${path.extname(photoFile)} はYMM4非対応のためスキップします`);
+      skipped.push(block.group.imageId);
+      continue;
+    }
+    if (extKind === "unknown") {
+      console.warn(`  警告: ${block.group.imageId} の拡張子 ${path.extname(photoFile)} はYMM4での対応が不明です。そのまま挿入します`);
+    }
+
     const photoPath = path.resolve(photosDir, photoFile);
 
     // Get image dimensions for zoom calculation
@@ -106,14 +151,13 @@ export async function step5_insertPhotos(
     }
 
     const uncPath = toWindowsUncPath(photoPath);
-    const imageItem = buildImageItem(template, {
-      filePath: uncPath,
+    const item = buildItemForFile(template, uncPath, {
       frame: block.frame,
       length: block.length,
       zoom,
       imageId: block.group.imageId,
     });
-    items.push(imageItem);
+    items.push(item);
     inserted++;
 
     // Insert reference text if URL exists
@@ -217,14 +261,13 @@ export async function step7_insertAi(
     }
 
     const uncPath = toWindowsUncPath(imagePath);
-    const imageItem = buildImageItem(template, {
-      filePath: uncPath,
+    const item = buildItemForFile(template, uncPath, {
       frame: block.frame,
       length: block.length,
       zoom,
       imageId: block.group.imageId,
     });
-    items.push(imageItem);
+    items.push(item);
     inserted++;
   }
 

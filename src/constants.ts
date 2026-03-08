@@ -23,3 +23,8 @@ export const DESC_MAX_LENGTH = 50;
 
 // HTTP status codes that are retryable (server/rate-limit errors)
 export const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+// Supported image extensions for YMM4
+export const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".bmp"]);
+export const VIDEO_EXTENSIONS = new Set([".webp", ".mp4", ".avi", ".mov", ".wmv"]);
+export const REJECTED_EXTENSIONS = new Set([".gif"]);

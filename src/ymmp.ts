@@ -27,6 +27,8 @@ const SHAPE_ITEM_TYPE =
   "YukkuriMovieMaker.Project.Items.ShapeItem, YukkuriMovieMaker";
 const TEXT_ITEM_TYPE =
   "YukkuriMovieMaker.Project.Items.TextItem, YukkuriMovieMaker";
+const VIDEO_ITEM_TYPE =
+  "YukkuriMovieMaker.Project.Items.VideoItem, YukkuriMovieMaker";
 
 /**
  * Read ymmp file (BOM-aware)
@@ -204,6 +206,65 @@ export function buildImageItem(
     IsClippingWithObjectAbove: true,
     IsAlwaysOnTop: false,
     IsZOrderEnabled: false,
+    VideoEffects: [],
+    Group: 0,
+    Frame: params.frame,
+    Layer: LAYER_IMAGE,
+    KeyFrames: { Frames: [], Count: 0 },
+    Length: params.length,
+    PlaybackRate: 100.0,
+    ContentOffset: "00:00:00",
+    Remark: makeRemark(params.imageId),
+    IsLocked: false,
+    IsHidden: false,
+  };
+}
+
+/**
+ * Build a VideoItem for the image layer (webp/video files, looped)
+ */
+export function buildVideoItem(
+  template: YmmpItem | undefined,
+  params: {
+    filePath: string;
+    frame: number;
+    length: number;
+    zoom: number;
+    imageId: string;
+  },
+): YmmpItem {
+  const x = template?.X
+    ? structuredClone(template.X)
+    : makeAnimatedValue(DEFAULT_IMAGE_X);
+  const y = template?.Y
+    ? structuredClone(template.Y)
+    : makeAnimatedValue(DEFAULT_IMAGE_Y);
+
+  return {
+    $type: VIDEO_ITEM_TYPE,
+    IsWaveformEnabled: false,
+    FilePath: params.filePath,
+    AudioTrackIndex: 0,
+    Volume: makeAnimatedValue(50.0),
+    Pan: makeAnimatedValue(0.0),
+    EchoIsEnabled: false,
+    EchoInterval: 0.1,
+    EchoAttenuation: 40,
+    AudioEffects: [],
+    X: x as AnimatedValue,
+    Y: y as AnimatedValue,
+    Z: makeAnimatedValue(0.0) as AnimatedValue,
+    Opacity: makeAnimatedValue(100.0) as AnimatedValue,
+    Zoom: makeAnimatedValue(params.zoom) as AnimatedValue,
+    Rotation: makeAnimatedValue(0.0) as AnimatedValue,
+    FadeIn: 0.0,
+    FadeOut: 0.0,
+    Blend: "Normal",
+    IsInverted: false,
+    IsClippingWithObjectAbove: true,
+    IsAlwaysOnTop: false,
+    IsZOrderEnabled: false,
+    IsLooped: true,
     VideoEffects: [],
     Group: 0,
     Frame: params.frame,
