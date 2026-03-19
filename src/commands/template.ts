@@ -15,6 +15,7 @@ interface TemplateOptions {
   csv: string;
   ymmp: string;
   output: string;
+  dryRun: boolean;
 }
 
 function parseTemplateArgs(args: string[]): TemplateOptions {
@@ -24,13 +25,14 @@ function parseTemplateArgs(args: string[]): TemplateOptions {
       csv: { type: "string" },
       ymmp: { type: "string" },
       output: { type: "string" },
+      "dry-run": { type: "boolean", default: false },
     },
     strict: true,
   });
 
-  if (!values.csv || !values.ymmp || !values.output) {
+  if (!values.csv || !values.ymmp || (!values.output && !values["dry-run"])) {
     console.error(
-      "使用法: bun run src/cli.ts template --csv <path> --ymmp <path> --output <path>",
+      "使用法: bun run src/cli.ts template --csv <path> --ymmp <path> --output <path> [--dry-run]",
     );
     process.exit(1);
   }
@@ -38,7 +40,8 @@ function parseTemplateArgs(args: string[]): TemplateOptions {
   return {
     csv: path.resolve(values.csv),
     ymmp: path.resolve(values.ymmp),
-    output: path.resolve(values.output),
+    output: values.output ? path.resolve(values.output) : "",
+    dryRun: values["dry-run"] ?? false,
   };
 }
 
@@ -48,9 +51,10 @@ export async function runTemplate(args: string[]) {
   console.log("=== YMM テンプレート生成ツール ===");
   console.log(`CSV: ${opts.csv}`);
   console.log(`ymmp: ${opts.ymmp}`);
-  console.log(`Output: ${opts.output}`);
+  if (!opts.dryRun) console.log(`Output: ${opts.output}`);
+  if (opts.dryRun) console.log("モード: Dry Run");
 
-  if (opts.output === opts.ymmp) {
+  if (!opts.dryRun && opts.output === opts.ymmp) {
     throw new Error("出力先パスは入力ymmpと異なるパスを指定してください");
   }
 
@@ -82,10 +86,23 @@ export async function runTemplate(args: string[]) {
   const sections = matchSections(sectionDefs, voiceItems);
   console.log(`マッチ成功: ${sections.length}件`);
 
+  const fps = 60;
   for (const s of sections) {
     const titleLabel = s.titleCard ? `TC:"${s.titleCard}"` : "TC:なし";
     const stLabel = s.sectionTitle || "(タイトルなし)";
-    console.log(`  ${stLabel} → Frame ${s.frame}, Length ${s.length} | ${titleLabel}`);
+    const durationSec = (s.length / fps).toFixed(1);
+    console.log(`  ${stLabel} → Frame ${s.frame}, Length ${s.length} (${durationSec}s) | ${titleLabel}`);
+  }
+
+  if (opts.dryRun) {
+    const titleCardCount = sections.filter((s) => s.titleCard).length;
+    const totalShift = titleCardCount * TITLE_CARD_LENGTH;
+    console.log("\n=== Dry Run サマリー ===");
+    console.log(`  セクション数: ${sections.length}件`);
+    console.log(`  タイトルカード: ${titleCardCount}件 → フレームシフト: +${totalShift}f`);
+    console.log(`  VoiceItem数: ${voiceItems.length}件 (Layer 1→${TMPL_LAYER.VOICE_1}, 2→${TMPL_LAYER.VOICE_2} に移動予定)`);
+    console.log(`  生成予定アイテム: タイトルカード ${titleCardCount * 5}件 + コンテンツセクション ${sections.length}件`);
+    return;
   }
 
   // Step 5: フレームシフト計算

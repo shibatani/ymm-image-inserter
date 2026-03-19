@@ -29,7 +29,7 @@ export const DESC_MAX_LENGTH = 50;
 export const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 
 // Default prompt style and negative
-export const DEFAULT_STYLE = "anime style illustration";
+export const DEFAULT_STYLE = "anime style illustration with reimu and marisa from touhou project";
 // [実験中] ネガティブプロンプトを一時的に無効化。テキスト生成の品質を比較検証中。
 // export const NEGATIVE_PROMPT_FULL = "Do not include any text, letters, words, numbers, kanji, hiragana, katakana, characters, typography, caption, subtitle, signs, signage, banners, posters, shop signs, storefront signs, neon signs, billboards, placards, labels, logos, symbols, gibberish text, random letters, or corrupted text in the image";
 export const DEFAULT_NEGATIVE = "";
