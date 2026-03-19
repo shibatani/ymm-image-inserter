@@ -463,7 +463,7 @@ export function buildContentSectionItems(
         fontSize,
         "#FF000000", // black text
         CONTENT_POS.shape.x, // centered on shape X
-        CONTENT_POS.shape.y, // centered on shape Y
+        CONTENT_POS.shape.y + 5, // centered on shape Y (font descender offset)
         frame,
         length,
         TMPL_LAYER.content.SECTION_TITLE,
