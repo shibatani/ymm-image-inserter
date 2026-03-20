@@ -225,9 +225,10 @@ export async function runInsert(args: string[]) {
         opts.maxGenerate,
       );
 
-      // Generate preview HTML
+      // Generate preview HTML and open in browser
       const previewPath = await generatePreviewHtml(aiOutputDir, blocks);
       console.log(`\nプレビュー: ${previewPath}`);
+      Bun.spawn(["open", previewPath], { stdout: "ignore", stderr: "ignore" });
 
       // Step 7: Insert AI images
       const aiSuccessful = aiGenResults.filter((r) => r.success).length;
