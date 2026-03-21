@@ -17,6 +17,7 @@ import {
   step7_insertAi,
 } from "../steps.ts";
 import { generatePreviewHtml } from "../preview.ts";
+import { makeRemark } from "../util.ts";
 
 /**
  * Delete AI image files for specified IDs so they can be regenerated.
@@ -178,12 +179,25 @@ export async function runInsert(args: string[]) {
     return;
   }
 
-  // Handle --regenerate: delete specified AI images before generation
+  // Handle --regenerate: delete specified AI images and their ymmp items
   const aiOutputDir = path.join(path.dirname(opts.output), "ai_images");
   if (opts.regenerate) {
-    console.log("\n--- 再生成: 既存画像削除 ---");
-    const deleted = await deleteRegenerateTargets(aiOutputDir, opts.regenerate);
-    console.log(`削除完了: ${deleted}件`);
+    console.log("\n--- 再生成: 既存画像・アイテム削除 ---");
+    const deletedFiles = await deleteRegenerateTargets(aiOutputDir, opts.regenerate);
+
+    // Also remove corresponding items from ymmp so they can be re-inserted
+    let deletedItems = 0;
+    for (const id of opts.regenerate) {
+      const remark = makeRemark(id);
+      for (let i = items.length - 1; i >= 0; i--) {
+        if (items[i]!.Remark === remark) {
+          items.splice(i, 1);
+          deletedItems++;
+        }
+      }
+    }
+    console.log(`画像ファイル削除: ${deletedFiles}件`);
+    console.log(`ymmpアイテム削除: ${deletedItems}件`);
   }
 
   // Step 4: Insert clipping backgrounds per image block

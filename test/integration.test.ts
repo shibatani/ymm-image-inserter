@@ -344,4 +344,39 @@ describe("integration: Step 7 (step7_insertAi)", () => {
     expect(result.inserted).toBe(0);
     expect(result.skipped).toHaveLength(0);
   });
+
+  test("regenerate: removing remark allows re-insertion with new image", async () => {
+    const data = makeEmptyYmmpData();
+    const blocks = [
+      makeBlock({ group: { imageId: "ai001", imageType: "AI" }, frame: 50, length: 400 }),
+    ];
+
+    // First insertion
+    const first = await step7_insertAi(data, blocks, outputDir);
+    expect(first.inserted).toBe(1);
+
+    const items = getItems(data);
+    expect(items.length).toBe(1);
+    const oldFilePath = items[0]!.FilePath;
+
+    // Second run without removing remark — should be skipped (idempotency)
+    const second = await step7_insertAi(data, blocks, outputDir);
+    expect(second.inserted).toBe(0);
+    expect(items.length).toBe(1);
+
+    // Simulate regenerate: remove the old item (as insert.ts now does)
+    const { makeRemark } = await import("../src/util.ts");
+    const remark = makeRemark("ai001");
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (items[i]!.Remark === remark) {
+        items.splice(i, 1);
+      }
+    }
+    expect(items.length).toBe(0);
+
+    // Third run after removing remark — should re-insert
+    const third = await step7_insertAi(data, blocks, outputDir);
+    expect(third.inserted).toBe(1);
+    expect(items.length).toBe(1);
+  });
 });
