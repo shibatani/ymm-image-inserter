@@ -129,6 +129,26 @@ export function applyExpressions(
       if (typeof face.Mouth === "string") {
         face.Mouth = face.Mouth.replace(/\\口\\.*$/, `\\口\\${expressionDef.mouth}`);
       }
+
+      // Apply motion effect to TachieFaceEffects
+      if (expressionDef.motion) {
+        const motionEffect = {
+          $type: "CharactorMotion.CharactorMotionEffect, CharactorMotion",
+          MotionType: expressionDef.motion.motionType,
+          StartNaturally: true,
+          EndNaturally: true,
+          Loop: true,
+          Interval: 0.5,
+          Invert: false,
+          Speed: expressionDef.motion.speed,
+          PositionCorrection: expressionDef.motion.positionCorrection,
+          ZoomCorrection: 100.0,
+          RotationCorrection: 100.0,
+          IsEnabled: true,
+          Remark: "",
+        };
+        ymmpItem.TachieFaceEffects = [motionEffect];
+      }
     }
   }
 

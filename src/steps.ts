@@ -12,6 +12,7 @@ import {
 } from "./ymmp.ts";
 import {
   makeRemark,
+  makeAnimatedValue,
   REMARK_PREFIX,
   toWindowsUncPath,
 } from "./util.ts";
@@ -24,6 +25,9 @@ import {
   IMAGE_EXTENSIONS,
   VIDEO_EXTENSIONS,
   REJECTED_EXTENSIONS,
+  IMAGE_TRANSITION_SE,
+  IMAGE_SE_LENGTH,
+  LAYER_IMAGE_SE,
 } from "./constants.ts";
 
 /**
@@ -263,4 +267,60 @@ export async function step7_insertAi(
   }
 
   return { inserted, skipped };
+}
+
+/**
+ * Step 8: Insert SE at image transition points.
+ * Adds a random SE from IMAGE_TRANSITION_SE at the start frame of each image block
+ * (except the very first one).
+ */
+export function step8_insertImageSE(
+  data: YmmpData,
+  blocks: ImageBlock[],
+): number {
+  const items = getItems(data);
+  const sorted = [...blocks].sort((a, b) => a.frame - b.frame);
+
+  let inserted = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const block = sorted[i]!;
+    const remark = `${REMARK_PREFIX}${block.group.imageId}:se`;
+
+    // Skip if already inserted (idempotency)
+    if (hasRemark(items, remark)) continue;
+
+    // Pick random SE
+    const se = IMAGE_TRANSITION_SE[Math.floor(Math.random() * IMAGE_TRANSITION_SE.length)]!;
+
+    const audioItem: YmmpItem = {
+      $type: "YukkuriMovieMaker.Project.Items.AudioItem, YukkuriMovieMaker",
+      IsWaveformEnabled: false,
+      FilePath: se.path,
+      AudioTrackIndex: 0,
+      Volume: makeAnimatedValue(se.volume),
+      Pan: makeAnimatedValue(0),
+      PlaybackRate: 100,
+      ContentOffset: "00:00:00",
+      FadeIn: 0,
+      FadeOut: 0,
+      IsLooped: false,
+      EchoIsEnabled: false,
+      EchoInterval: 0.1,
+      EchoAttenuation: 40,
+      AudioEffects: [],
+      Group: 0,
+      Frame: block.frame,
+      Layer: LAYER_IMAGE_SE,
+      KeyFrames: { Frames: [], Count: 0 },
+      Length: IMAGE_SE_LENGTH,
+      Remark: remark,
+      IsLocked: false,
+      IsHidden: false,
+    } as YmmpItem;
+
+    items.push(audioItem);
+    inserted++;
+  }
+
+  return inserted;
 }

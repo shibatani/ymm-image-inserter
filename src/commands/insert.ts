@@ -15,6 +15,7 @@ import {
   step5_insertPhotos,
   step6_generateAi,
   step7_insertAi,
+  step8_insertImageSE,
 } from "../steps.ts";
 import { generatePreviewHtml } from "../preview.ts";
 import { makeRemark } from "../util.ts";
@@ -193,6 +194,7 @@ export async function runInsert(args: string[]) {
     }
     console.log(`  実写/図解画像 (Layer 11):          ${photoBlocks.length}枚`);
     console.log(`  参考文献テキスト (Layer 12):       ${refCount}件`);
+    console.log(`  画像切り替えSE (Layer 13):         ${blocks.length > 1 ? blocks.length - 1 : 0}件`);
     console.log(`  マッチ失敗スキップ:                ${failures.length}枚`);
     return;
   }
@@ -303,6 +305,11 @@ export async function runInsert(args: string[]) {
       }
     }
   }
+
+  // Step 8: Insert image transition SE
+  console.log("\n--- Step 8: 画像切り替え効果音挿入 ---");
+  const seInserted = step8_insertImageSE(data, blocks);
+  console.log(`挿入: ${seInserted}件`);
 
   // Sort items by Frame
   items.sort((a, b) => a.Frame - b.Frame);

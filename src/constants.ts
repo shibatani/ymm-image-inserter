@@ -3,6 +3,16 @@ export const LAYER_SHAPE_TEMPLATE = 6;
 export const LAYER_CLIPPING = 10;
 export const LAYER_IMAGE = 11;
 export const LAYER_REFERENCE_TEXT = 12;
+export const LAYER_IMAGE_SE = 13;
+
+// 画像切り替え効果音（ファイルパスと音量のペア）
+export const IMAGE_TRANSITION_SE = [
+  { path: "C:\\動画作成\\画像切り替え効果音\\カーソル移動2.mp3", volume: 30.0 },
+  { path: "C:\\動画作成\\画像切り替え効果音\\決定ボタンを押す3.mp3", volume: 30.0 },
+  { path: "C:\\動画作成\\画像切り替え効果音\\決定ボタンを押す7.mp3", volume: 30.0 },
+  { path: "C:\\動画作成\\画像切り替え効果音\\決定ボタンを押す31.mp3", volume: 20.0 },
+];
+export const IMAGE_SE_LENGTH = 53;
 
 // YMM item defaults
 export const MAX_TRANSITION_LENGTH = 90;
@@ -41,10 +51,10 @@ export const REJECTED_EXTENSIONS = new Set([".gif"]);
 
 // テンプレートアセットパス（Windows UNC パス）
 export const TEMPLATE_ASSETS = {
-  background: "\\\\Mac\\Home\\Downloads\\nc397219_木枠付き黒板風背景（1920×1080・透過無し）.png",
-  serifFrame: "\\\\Mac\\Home\\Downloads\\nc265534_セリフ枠（羊皮紙風）1920x1080.png",
-  titleBackground: "\\\\Mac\\Home\\Downloads\\nc431747_黒板背景.png",
-  se: "\\\\Mac\\Home\\Downloads\\決定ボタンを押す1 (2).mp3",
+  background: "C:\\動画作成\\アセット\\nc397219_木枠付き黒板風背景（1920×1080・透過無し）.png",
+  serifFrame: "C:\\動画作成\\アセット\\nc265534_セリフ枠（羊皮紙風）1920x1080.png",
+  titleBackground: "C:\\動画作成\\アセット\\nc431747_黒板背景.png",
+  se: "C:\\動画作成\\アセット\\決定ボタンを押す1 (2).mp3",
   bgmIntro: "C:\\動画作成\\BGM\\少年達の夏休み的なBGM.mp3",
   bgmMain: "C:\\動画作成\\BGM\\昼下がり気分.mp3",
   bgmOutro: "C:\\動画作成\\BGM\\極東の羊、テレキャスターと踊る.mp3",
@@ -92,15 +102,22 @@ export interface ExpressionDef {
   eyebrow: string | null;
   eye: string;
   mouth: string;
+  motion: MotionDef | null;
+}
+
+export interface MotionDef {
+  motionType: string;
+  speed: number;
+  positionCorrection: number;
 }
 
 export const EXPRESSION_MAP: Record<string, ExpressionDef> = {
-  "焦り":   { eyebrow: null,     eye: "06.png", mouth: "13.png" },
-  "にやり": { eyebrow: "00.png", eye: "01.png", mouth: "06.png" },
-  "驚き":   { eyebrow: "00.png", eye: "05.png", mouth: "11.png" },
-  "悲しみ": { eyebrow: "03.png", eye: "02.png", mouth: "01.png" },
-  "泣く":   { eyebrow: "03.png", eye: "04.png", mouth: "07.png" },
-  "怒り":   { eyebrow: "01.png", eye: "01.png", mouth: "11.png" },
+  "焦り":   { eyebrow: null,     eye: "06.png", mouth: "13.png", motion: { motionType: "QuakeSmall",    speed: 100, positionCorrection: 10 } },
+  "にやり": { eyebrow: "00.png", eye: "01.png", mouth: "06.png", motion: { motionType: "FunSmall",      speed: 50,  positionCorrection: 10 } },
+  "驚き":   { eyebrow: "00.png", eye: "05.png", mouth: "11.png", motion: { motionType: "JumpSmall01",   speed: 100, positionCorrection: 10 } },
+  "悲しみ": { eyebrow: "03.png", eye: "02.png", mouth: "01.png", motion: { motionType: "BreathSmall",   speed: 100, positionCorrection: 100 } },
+  "泣く":   { eyebrow: "03.png", eye: "04.png", mouth: "07.png", motion: { motionType: "QuakeSmall",    speed: 100, positionCorrection: 10 } },
+  "怒り":   { eyebrow: "01.png", eye: "01.png", mouth: "11.png", motion: { motionType: "JumpSmallLoop", speed: 50,  positionCorrection: 10 } },
 };
 
 // 立ち絵のキャラクターフォルダ
